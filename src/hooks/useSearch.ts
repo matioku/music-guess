@@ -12,14 +12,10 @@ export function useSearch(mode: ResourceMode) {
     if (timerRef.current) clearTimeout(timerRef.current);
 
     const trimmed = inputValue.trim();
-    if (!trimmed) {
-      setSuggestions([]);
-      setIsSearching(false);
-      return;
-    }
+    if (!trimmed) return;
 
-    setIsSearching(true);
     timerRef.current = setTimeout(async () => {
+      setIsSearching(true);
       try {
         const results =
           mode === "release"
@@ -43,5 +39,8 @@ export function useSearch(mode: ResourceMode) {
     setInput("");
   }
 
-  return { inputValue, setInput, suggestions, isSearching, clearSuggestions };
+  // Derive: empty input → no suggestions shown, avoids stale results flash
+  const visibleSuggestions = inputValue.trim() ? suggestions : [];
+
+  return { inputValue, setInput, suggestions: visibleSuggestions, isSearching, clearSuggestions };
 }
