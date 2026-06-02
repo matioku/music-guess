@@ -1,5 +1,4 @@
-// Task 9 will import: useReducer, useEffect, useCallback, useRef (React hooks)
-// Task 9 will import: getDailyMbid, getRandomMbid, getReleaseGroup, getArtist, getCoverArt, ResourceMode, Difficulty
+import { useReducer, useEffect, useCallback, useRef } from "react";
 import type {
   GameState,
   GameStatus,
@@ -9,10 +8,15 @@ import type {
   ReleaseComparison,
   ArtistComparison,
   SavedGame,
+  ResourceMode,
+  Difficulty,
 } from "../types";
 import { DIFFICULTY_CONFIG } from "../config/difficulty";
 import { compareResources } from "../utils/compare";
 import { computeAvailableHint } from "../utils/hints";
+import { getDailyMbid, getRandomMbid } from "../utils/seed";
+import { getReleaseGroup, getArtist } from "../services/musicbrainz";
+import { getCoverArt } from "../services/coverArt";
 
 // ─── Action types ─────────────────────────────────────────────────────────────
 
@@ -165,4 +169,114 @@ function buildGuess(
     return { resource: payload as Artist, comparison: comparison as ArtistComparison };
   }
   return null;
+}
+
+// ─── Hook helpers ─────────────────────────────────────────────────────────────
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function buildKey(mode: ResourceMode, date: string): string {
+  return `uujr_game_${mode}_${date}`;
+}
+
+async function fetchResource(mbid: string, mode: ResourceMode): Promise<Resource> {
+  return mode === "release" ? getReleaseGroup(mbid) : getArtist(mbid);
+}
+
+async function fetchResourceWithCoverArt(mbid: string, mode: ResourceMode): Promise<Resource> {
+  const resource = await fetchResource(mbid, mode);
+  if (resource.kind !== "release") return resource;
+  const coverArtUrl = await getCoverArt(resource.mbid, resource.title, resource.artist);
+  return { ...resource, coverArtUrl };
+}
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
+export function useGameState(
+  mode: ResourceMode,
+  difficulty: Difficulty,
+  isDaily: boolean
+) {
+  const date = today();
+  const key = buildKey(mode, date);
+
+  const [state, dispatch] = useReducer(
+    gameReducer,
+    undefined,
+    (): GameState => {
+      const mbid = isDaily ? getDailyMbid(date, mode) : getRandomMbid(mode);
+      return createInitialState(mode, difficulty, mbid);
+    }
+  );
+
+  const initialized = useRef(false);
+
+  // Runs once on mount: restore saved game or start fresh, then fetch target
+  useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+
+    let mbidToFetch = state.targetMbid;
+
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      try {
+        const saved = JSON.parse(stored) as SavedGame;
+        dispatch({ type: "LOAD_SAVED", payload: saved });
+        mbidToFetch = saved.targetMbid;
+      } catch {
+        // Corrupted entry — proceed with fresh game
+      }
+    }
+
+    dispatch({ type: "LOAD_TARGET_START" });
+    fetchResourceWithCoverArt(mbidToFetch, mode)
+      .then((resource) => dispatch({ type: "LOAD_TARGET_SUCCESS", payload: resource }))
+      .catch(() => dispatch({ type: "LOAD_TARGET_ERROR" }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist on every meaningful state change (skip blank initial state)
+  useEffect(() => {
+    if (!initialized.current) return;
+    if (state.status === "playing" && state.guesses.length === 0 && state.hintsUsed === 0) return;
+
+    const toSave: SavedGame = {
+      date,
+      mode: state.mode,
+      difficulty: state.difficulty,
+      targetMbid: state.targetMbid,
+      guesses: state.guesses,
+      status: state.status,
+      blurLevel: state.blurLevel,
+      revealedFields: state.revealedFields,
+      hintsUsed: state.hintsUsed,
+    };
+    localStorage.setItem(key, JSON.stringify(toSave));
+  }, [state, key, date]);
+
+  const submitGuess = useCallback(
+    async (mbid: string) => {
+      const resource = await fetchResource(mbid, mode);
+      dispatch({ type: "SUBMIT_GUESS", payload: resource });
+    },
+    [mode]
+  );
+
+  const takeHint = useCallback(() => dispatch({ type: "TAKE_HINT" }), []);
+  const skipHint = useCallback(() => dispatch({ type: "SKIP_HINT" }), []);
+
+  const reset = useCallback(() => {
+    const newMbid = isDaily ? getDailyMbid(date, mode) : getRandomMbid(mode);
+    dispatch({ type: "RESET", payload: { targetMbid: newMbid } });
+    localStorage.removeItem(key);
+    dispatch({ type: "LOAD_TARGET_START" });
+    fetchResourceWithCoverArt(newMbid, mode)
+      .then((resource) => dispatch({ type: "LOAD_TARGET_SUCCESS", payload: resource }))
+      .catch(() => dispatch({ type: "LOAD_TARGET_ERROR" }));
+  }, [mode, isDaily, date, key]);
+
+  return { state, submitGuess, takeHint, skipHint, reset };
 }
