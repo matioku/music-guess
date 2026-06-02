@@ -4,6 +4,7 @@ export type GameStatus    = "playing" | "won" | "lost";
 export type FieldFeedback = "correct" | "wrong" | "partial" | "higher" | "lower";
 
 export interface ReleaseGroup {
+  kind: "release";
   mbid: string;
   title: string;
   artist: string;
@@ -18,6 +19,7 @@ export interface ReleaseGroup {
 }
 
 export interface Artist {
+  kind: "artist";
   mbid: string;
   name: string;
   type: string | null;
@@ -53,10 +55,17 @@ export interface ArtistComparison {
   tags: FieldComparison;
 }
 
-export interface Guess {
-  resource: Resource;
-  comparison: ReleaseComparison | ArtistComparison;
+export interface ReleaseGuess {
+  resource: ReleaseGroup;
+  comparison: ReleaseComparison;
 }
+
+export interface ArtistGuess {
+  resource: Artist;
+  comparison: ArtistComparison;
+}
+
+export type Guess = ReleaseGuess | ArtistGuess;
 
 export interface GameState {
   mode: ResourceMode;
