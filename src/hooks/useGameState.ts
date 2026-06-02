@@ -65,7 +65,6 @@ export function gameReducer(state: GameState, action: Action): GameState {
 
     case "LOAD_SAVED": {
       const saved = action.payload;
-      const config = DIFFICULTY_CONFIG[saved.difficulty];
       return {
         ...createInitialState(saved.mode, saved.difficulty, saved.targetMbid),
         guesses: saved.guesses,
@@ -73,7 +72,15 @@ export function gameReducer(state: GameState, action: Action): GameState {
         blurLevel: saved.blurLevel,
         revealedFields: saved.revealedFields,
         hintsUsed: saved.hintsUsed,
-        coverMode: config.coverMode,
+        availableHint:
+          saved.status === "playing"
+            ? computeAvailableHint(
+                saved.guesses.length,
+                saved.difficulty,
+                saved.mode,
+                saved.hintsUsed
+              )
+            : null,
         isLoadingTarget: true,
       };
     }
