@@ -212,6 +212,7 @@ export function useGameState(
   );
 
   const initialized = useRef(false);
+  const isSubmittingRef = useRef(false);
 
   // Runs once on mount: restore saved game or start fresh, then fetch target
   useEffect(() => {
@@ -238,10 +239,11 @@ export function useGameState(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist on every meaningful state change (skip blank initial state)
+  // Persist on every meaningful state change (skip blank and error states)
   useEffect(() => {
     if (!initialized.current) return;
     if (state.status === "playing" && state.guesses.length === 0 && state.hintsUsed === 0) return;
+    if (state.status === "error") return;
 
     const toSave: SavedGame = {
       date,
@@ -259,8 +261,14 @@ export function useGameState(
 
   const submitGuess = useCallback(
     async (mbid: string) => {
-      const resource = await fetchResource(mbid, mode);
-      dispatch({ type: "SUBMIT_GUESS", payload: resource });
+      if (isSubmittingRef.current) return;
+      isSubmittingRef.current = true;
+      try {
+        const resource = await fetchResource(mbid, mode);
+        dispatch({ type: "SUBMIT_GUESS", payload: resource });
+      } finally {
+        isSubmittingRef.current = false;
+      }
     },
     [mode]
   );
@@ -269,14 +277,15 @@ export function useGameState(
   const skipHint = useCallback(() => dispatch({ type: "SKIP_HINT" }), []);
 
   const reset = useCallback(() => {
-    const newMbid = isDaily ? getDailyMbid(date, mode) : getRandomMbid(mode);
+    const currentDate = today();
+    const newMbid = isDaily ? getDailyMbid(currentDate, mode) : getRandomMbid(mode);
     dispatch({ type: "RESET", payload: { targetMbid: newMbid } });
-    localStorage.removeItem(key);
+    localStorage.removeItem(buildKey(mode, currentDate));
     dispatch({ type: "LOAD_TARGET_START" });
     fetchResourceWithCoverArt(newMbid, mode)
       .then((resource) => dispatch({ type: "LOAD_TARGET_SUCCESS", payload: resource }))
       .catch(() => dispatch({ type: "LOAD_TARGET_ERROR" }));
-  }, [mode, isDaily, date, key]);
+  }, [mode, isDaily]);
 
   return { state, submitGuess, takeHint, skipHint, reset };
 }
