@@ -1,4 +1,5 @@
 import { getArtistRelations } from "./musicbrainz";
+import { fetchArtistImageFromDiscogs } from "./discogs";
 
 // MusicBrainz hosts no images, but artists carry URL relationships pointing to
 // Wikimedia Commons / Wikidata. We resolve those to a displayable photo URL.
@@ -39,22 +40,35 @@ async function imageFromWikidata(qid: string): Promise<string | null> {
   }
 }
 
-export async function getArtistImage(mbid: string): Promise<string | null> {
-  let relations: { type: string; resource: string }[];
+export async function getArtistImage(
+  mbid: string,
+  name?: string
+): Promise<string | null> {
+  let relations: { type: string; resource: string }[] = [];
   try {
     relations = await getArtistRelations(mbid);
   } catch {
-    return null;
+    // Relations unavailable — fall through to the name-based Discogs search.
   }
 
-  // Prefer an explicit "image" relationship.
+  // Prefer an explicit "image" relationship (Wikimedia Commons).
   const image = relations.find((r) => r.type === "image");
   if (image) return fromCommonsPageUrl(image.resource) ?? image.resource;
 
-  // Otherwise derive it from the linked Wikidata entity.
-  const wikidata = relations.find((r) => r.type === "wikidata");
-  const qid = wikidata?.resource.match(/(Q\d+)/)?.[1];
-  if (qid) return imageFromWikidata(qid);
+  // Then derive it from the linked Wikidata entity (property P18).
+  const qid = relations
+    .find((r) => r.type === "wikidata")
+    ?.resource.match(/(Q\d+)/)?.[1];
+  if (qid) {
+    const fromWd = await imageFromWikidata(qid);
+    if (fromWd) return fromWd;
+  }
+
+  // Last resort: Discogs, by linked artist id when available, else by name.
+  const discogsId = relations
+    .find((r) => r.type === "discogs")
+    ?.resource.match(/\/artist\/(\d+)/)?.[1];
+  if (name || discogsId) return fetchArtistImageFromDiscogs(name ?? "", discogsId);
 
   return null;
 }

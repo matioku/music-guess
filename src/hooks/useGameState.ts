@@ -200,7 +200,7 @@ async function fetchResourceWithCoverArt(mbid: string, mode: ResourceMode): Prom
     const coverArtUrl = await getCoverArt(resource.mbid, resource.title, resource.artist);
     return { ...resource, coverArtUrl };
   }
-  const imageUrl = await getArtistImage(resource.mbid);
+  const imageUrl = await getArtistImage(resource.mbid, resource.name);
   return { ...resource, imageUrl };
 }
 
