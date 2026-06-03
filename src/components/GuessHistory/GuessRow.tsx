@@ -4,6 +4,8 @@ import { fieldsForMode, FEEDBACK_META } from "../../utils/display";
 interface GuessRowProps {
   guess: Guess;
   mode: ResourceMode;
+  /** Winning guess — highlighted with a pale-green background. */
+  highlight?: boolean;
 }
 
 function formatValue(value: FieldComparison["value"]): string {
@@ -34,16 +36,16 @@ function FieldCell({ field }: { field: FieldComparison }) {
 
 // One comparison row: the guessed resource's name, then a colour/icon/text
 // cell per field (never colour alone — RGAA).
-export function GuessRow({ guess, mode }: GuessRowProps) {
+export function GuessRow({ guess, mode, highlight }: GuessRowProps) {
   const name =
     guess.resource.kind === "release" ? guess.resource.title : guess.resource.name;
   const comparison = guess.comparison as unknown as Record<string, FieldComparison>;
 
   return (
-    <tr className="text-[12px]">
+    <tr className={`text-[12px] ${highlight ? "ring-2 ring-inset ring-feedback-correct" : ""}`}>
       <th
         scope="row"
-        className="border-b border-[#e3dfc8] bg-white px-2 py-1.5 text-left align-top font-semibold text-[#1a1a1a]"
+        className={`border-b border-[#e3dfc8] px-2 py-1.5 text-left align-top font-semibold text-[#1a1a1a] ${highlight ? "bg-feedback-correct-bg" : "bg-white"}`}
       >
         {name}
       </th>

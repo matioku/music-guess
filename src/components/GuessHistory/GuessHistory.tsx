@@ -7,11 +7,18 @@ interface GuessHistoryProps {
   mode: ResourceMode;
   /** Field keys unlocked by hints — highlighted in the header. */
   revealedFields?: string[];
+  /** MBID of the winning guess — its row is highlighted. */
+  highlightMbid?: string;
 }
 
 // XP-style results table. Most recent guess on top so the latest feedback is
 // visible without scrolling.
-export function GuessHistory({ guesses, mode, revealedFields = [] }: GuessHistoryProps) {
+export function GuessHistory({
+  guesses,
+  mode,
+  revealedFields = [],
+  highlightMbid,
+}: GuessHistoryProps) {
   if (guesses.length === 0) {
     return (
       <p className="mt-3 text-[12px] italic text-[#6b6859]">
@@ -55,7 +62,12 @@ export function GuessHistory({ guesses, mode, revealedFields = [] }: GuessHistor
         </thead>
         <tbody>
           {[...guesses].reverse().map((guess, i) => (
-            <GuessRow key={guesses.length - 1 - i} guess={guess} mode={mode} />
+            <GuessRow
+              key={guesses.length - 1 - i}
+              guess={guess}
+              mode={mode}
+              highlight={!!highlightMbid && guess.resource.mbid === highlightMbid}
+            />
           ))}
         </tbody>
       </table>

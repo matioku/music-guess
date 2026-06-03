@@ -5,6 +5,8 @@ import { LcdStrip } from "../LcdStrip/LcdStrip";
 import { SearchInput } from "../SearchInput/SearchInput";
 import { GuessHistory } from "../GuessHistory/GuessHistory";
 import { HintPanel } from "../HintPanel/HintPanel";
+import { VictoryScreen } from "../VictoryScreen/VictoryScreen";
+import { DefeatScreen } from "../DefeatScreen/DefeatScreen";
 import { MODE_LABELS } from "../../utils/display";
 import type { ResourceMode, Difficulty, Resource } from "../../types";
 
@@ -18,13 +20,21 @@ interface GameBoardProps {
   difficulty: Difficulty;
   isDaily: boolean;
   date: string;
+  /** Start a fresh random round (App remounts the board). */
+  onNewRandom: () => void;
 }
 
 // Owns one round of play. Remounted by App (via key) whenever the resource
 // mode, difficulty or daily/random session changes, so the hooks re-initialise
 // cleanly. Everything that depends on the mystery resource lives here.
-export function GameBoard({ mode, difficulty, isDaily, date }: GameBoardProps) {
-  const { state, submitGuess, takeHint, skipHint, retryLoadTarget } =
+export function GameBoard({
+  mode,
+  difficulty,
+  isDaily,
+  date,
+  onNewRandom,
+}: GameBoardProps) {
+  const { state, submitGuess, takeHint, skipHint, reset, retryLoadTarget } =
     useGameState(mode, difficulty, isDaily);
   const { inputValue, setInput, suggestions, isSearching, error, clearSuggestions } =
     useSearch(mode);
@@ -51,7 +61,8 @@ export function GameBoard({ mode, difficulty, isDaily, date }: GameBoardProps) {
     );
   }
 
-  const revealed = state.status === "won";
+  // Reveal the cover/title on any end state (win or defeat).
+  const revealed = state.status !== "playing";
   const title = revealed && state.target
     ? state.target.kind === "release"
       ? state.target.title
@@ -102,8 +113,27 @@ export function GameBoard({ mode, difficulty, isDaily, date }: GameBoardProps) {
           guesses={state.guesses}
           mode={mode}
           revealedFields={state.revealedFields}
+          highlightMbid={state.status === "won" ? state.targetMbid : undefined}
         />
       </div>
+
+      {state.status === "won" && state.target && (
+        <VictoryScreen
+          resource={state.target}
+          guessCount={state.guesses.length}
+          isDaily={isDaily}
+          onReplay={reset}
+          onNewRandom={onNewRandom}
+        />
+      )}
+      {state.status === "lost" && state.target && (
+        <DefeatScreen
+          resource={state.target}
+          isDaily={isDaily}
+          onReplay={reset}
+          onNewRandom={onNewRandom}
+        />
+      )}
 
       <StatusBar
         mode={mode}

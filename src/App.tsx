@@ -48,6 +48,7 @@ function App() {
           difficulty={difficulty}
           isDaily={isDaily}
           date={date}
+          onNewRandom={startRandom}
         />
       </main>
     </div>
