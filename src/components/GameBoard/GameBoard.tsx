@@ -3,6 +3,7 @@ import { useSearch } from "../../hooks/useSearch";
 import { StatusBar } from "../StatusBar/StatusBar";
 import { LcdStrip } from "../LcdStrip/LcdStrip";
 import { SearchInput } from "../SearchInput/SearchInput";
+import { GuessHistory } from "../GuessHistory/GuessHistory";
 import { MODE_LABELS } from "../../utils/display";
 import type { ResourceMode, Difficulty, Resource } from "../../types";
 
@@ -91,10 +92,11 @@ export function GameBoard({ mode, difficulty, isDaily, date }: GameBoardProps) {
           />
         )}
 
-        {/* Guess history table — built in a later commit. */}
-        <p className="mt-3 text-[12px] text-[#5a5749]">
-          Essais : {state.guesses.length}
-        </p>
+        <GuessHistory
+          guesses={state.guesses}
+          mode={mode}
+          revealedFields={state.revealedFields}
+        />
       </div>
 
       <StatusBar
