@@ -24,6 +24,11 @@ dist-ssr
 *.sw?
 
 docs/
+presentation/
+*/worktrees/*
+.worktrees/
+
+graphify-out/
 
 .env
 .env.local
