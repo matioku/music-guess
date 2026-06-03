@@ -1,6 +1,6 @@
 export type ResourceMode  = "release" | "artist";
 export type Difficulty    = "easy" | "medium" | "hard" | "expert";
-export type GameStatus    = "playing" | "won" | "lost" | "error";
+export type GameStatus    = "playing" | "won" | "lost";
 export type CoverMode     = "visible" | "blurred" | "hidden";
 export type HintType      =
   | { kind: "blur" }
@@ -84,6 +84,9 @@ export interface GameState {
   availableHint: HintType | null;
   hintsUsed: number;
   isLoadingTarget: boolean;
+  // True when fetching the target failed; kept separate from `status` so a
+  // retry can restore the real game status (playing/won/lost).
+  targetLoadError: boolean;
 }
 
 export interface SavedGame {

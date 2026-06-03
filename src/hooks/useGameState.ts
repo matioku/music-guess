@@ -51,6 +51,7 @@ export function createInitialState(
     availableHint: null,
     hintsUsed: 0,
     isLoadingTarget: false,
+    targetLoadError: false,
   };
 }
 
@@ -59,13 +60,18 @@ export function createInitialState(
 export function gameReducer(state: GameState, action: Action): GameState {
   switch (action.type) {
     case "LOAD_TARGET_START":
-      return { ...state, isLoadingTarget: true };
+      return { ...state, isLoadingTarget: true, targetLoadError: false };
 
     case "LOAD_TARGET_SUCCESS":
-      return { ...state, target: action.payload, isLoadingTarget: false };
+      return {
+        ...state,
+        target: action.payload,
+        isLoadingTarget: false,
+        targetLoadError: false,
+      };
 
     case "LOAD_TARGET_ERROR":
-      return { ...state, isLoadingTarget: false, status: "error" };
+      return { ...state, isLoadingTarget: false, targetLoadError: true };
 
     case "LOAD_SAVED": {
       const saved = action.payload;
@@ -214,6 +220,20 @@ export function useGameState(
   const initialized = useRef(false);
   const isSubmittingRef = useRef(false);
 
+  // Fetches the target (with cover art) and dispatches the outcome. Reused by
+  // mount, retry, and reset — none of which touch guesses/localStorage here.
+  const loadTarget = useCallback(
+    (mbid: string) => {
+      dispatch({ type: "LOAD_TARGET_START" });
+      fetchResourceWithCoverArt(mbid, mode)
+        .then((resource) =>
+          dispatch({ type: "LOAD_TARGET_SUCCESS", payload: resource })
+        )
+        .catch(() => dispatch({ type: "LOAD_TARGET_ERROR" }));
+    },
+    [mode]
+  );
+
   // Runs once on mount: restore saved game or start fresh, then fetch target
   useEffect(() => {
     if (initialized.current) return;
@@ -232,18 +252,15 @@ export function useGameState(
       }
     }
 
-    dispatch({ type: "LOAD_TARGET_START" });
-    fetchResourceWithCoverArt(mbidToFetch, mode)
-      .then((resource) => dispatch({ type: "LOAD_TARGET_SUCCESS", payload: resource }))
-      .catch(() => dispatch({ type: "LOAD_TARGET_ERROR" }));
+    loadTarget(mbidToFetch);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist on every meaningful state change (skip blank and error states)
+  // Persist on every meaningful state change (skip blank state and load errors)
   useEffect(() => {
     if (!initialized.current) return;
     if (state.status === "playing" && state.guesses.length === 0 && state.hintsUsed === 0) return;
-    if (state.status === "error") return;
+    if (state.targetLoadError) return;
 
     const toSave: SavedGame = {
       date,
@@ -276,16 +293,20 @@ export function useGameState(
   const takeHint = useCallback(() => dispatch({ type: "TAKE_HINT" }), []);
   const skipHint = useCallback(() => dispatch({ type: "SKIP_HINT" }), []);
 
+  // Non-destructive: re-fetch the current target after a load failure, keeping
+  // the existing guesses and saved progress intact.
+  const retryLoadTarget = useCallback(() => {
+    loadTarget(state.targetMbid);
+  }, [loadTarget, state.targetMbid]);
+
+  // Destructive: start a brand-new game (clears guesses and saved progress).
   const reset = useCallback(() => {
     const currentDate = today();
     const newMbid = isDaily ? getDailyMbid(currentDate, mode) : getRandomMbid(mode);
     dispatch({ type: "RESET", payload: { targetMbid: newMbid } });
     localStorage.removeItem(buildKey(mode, currentDate));
-    dispatch({ type: "LOAD_TARGET_START" });
-    fetchResourceWithCoverArt(newMbid, mode)
-      .then((resource) => dispatch({ type: "LOAD_TARGET_SUCCESS", payload: resource }))
-      .catch(() => dispatch({ type: "LOAD_TARGET_ERROR" }));
-  }, [mode, isDaily]);
+    loadTarget(newMbid);
+  }, [mode, isDaily, loadTarget]);
 
-  return { state, submitGuess, takeHint, skipHint, reset };
+  return { state, submitGuess, takeHint, skipHint, reset, retryLoadTarget };
 }
