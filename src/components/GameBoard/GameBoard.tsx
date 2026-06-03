@@ -1,6 +1,12 @@
 import { useGameState } from "../../hooks/useGameState";
 import { StatusBar } from "../StatusBar/StatusBar";
-import type { ResourceMode, Difficulty } from "../../types";
+import { LcdStrip } from "../LcdStrip/LcdStrip";
+import type { ResourceMode, Difficulty, Resource } from "../../types";
+
+function coverOf(target: Resource | null): string | null {
+  if (!target) return null;
+  return target.kind === "release" ? target.coverArtUrl : target.imageUrl;
+}
 
 interface GameBoardProps {
   mode: ResourceMode;
@@ -32,14 +38,29 @@ export function GameBoard({ mode, difficulty, isDaily, date }: GameBoardProps) {
     );
   }
 
+  const revealed = state.status === "won";
+  const title = revealed && state.target
+    ? state.target.kind === "release"
+      ? state.target.title
+      : state.target.name
+    : null;
+  const subtitle = revealed && state.target?.kind === "release"
+    ? state.target.artist
+    : null;
+
   return (
     <div className="flex flex-col gap-2 bg-xp-beige p-2">
-      {/* LCD strip — built in a later commit. */}
-      <div className="lcd-strip lcd-scanlines relative grid h-24 place-items-center rounded-sm">
-        <span className="lcd-glow font-pixel text-[13px] tracking-widest">
-          {state.isLoadingTarget ? "LOADING..." : "MUSICGUESS"}
-        </span>
-      </div>
+      <LcdStrip
+        coverUrl={coverOf(state.target)}
+        coverMode={state.coverMode}
+        blurLevel={state.blurLevel}
+        isLoading={state.isLoadingTarget}
+        revealed={revealed}
+        title={title}
+        subtitle={subtitle}
+        difficulty={difficulty}
+        guessCount={state.guesses.length}
+      />
 
       {/* Game zone — search input + guess history, built in later commits. */}
       <div className="min-h-[120px] rounded-sm border border-[#aca899] bg-white p-3 text-[12px] text-[#5a5749]">
