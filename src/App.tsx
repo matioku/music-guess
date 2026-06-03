@@ -1,148 +1,57 @@
-import "./App.css";
-import { useGameState } from "./hooks/useGameState";
-import { useSearch } from "./hooks/useSearch";
+import { useState } from "react";
+import type { ResourceMode, Difficulty } from "./types";
+import { TitleBar } from "./components/TitleBar/TitleBar";
+import { MenuBar } from "./components/MenuBar/MenuBar";
+import { Toolbar } from "./components/Toolbar/Toolbar";
+import { GameBoard } from "./components/GameBoard/GameBoard";
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 function App() {
-  const { state, submitGuess, takeHint, skipHint, reset, retryLoadTarget } =
-    useGameState("release", "hard", true);
-  const { inputValue, setInput, suggestions, error, clearSuggestions } =
-    useSearch("release");
+  const date = today();
+  const [mode, setMode] = useState<ResourceMode>("release");
+  const [difficulty, setDifficulty] = useState<Difficulty>("hard");
+  const [isDaily, setIsDaily] = useState(true);
+  // Bumped to force a fresh GameBoard mount (new random draw / replay).
+  const [sessionNonce, setSessionNonce] = useState(0);
 
-  if (state.isLoadingTarget) return <p>Chargement...</p>;
+  const startRandom = () => {
+    setIsDaily(false);
+    setSessionNonce((n) => n + 1);
+  };
+  const startDaily = () => {
+    setIsDaily(true);
+    setSessionNonce((n) => n + 1);
+  };
 
-  if (state.targetLoadError) {
-    return (
-      <p>
-        Erreur de chargement.{" "}
-        <button onClick={retryLoadTarget}>Réessayer</button>
-      </p>
-    );
-  }
+  const boardKey = `${mode}-${difficulty}-${isDaily ? "d" : "r"}-${sessionNonce}`;
 
   return (
-    <div style={{ padding: "1rem", fontFamily: "monospace" }}>
-      <p>
-        Mode: {state.mode} | Difficulty: {state.difficulty} | Status:{" "}
-        {state.status}
-      </p>
-      <p>
-        Guesses: {state.guesses.length} | BlurLevel: {state.blurLevel} |
-        HintsUsed: {state.hintsUsed}
-      </p>
-      <p>RevealedFields: [{state.revealedFields.join(", ")}]</p>
-
-      {/* ⚠️ SMOKE-TEST DEBUG ONLY — reveals the answer to test the win condition.
-          Violates the "target never in DOM before win" rule; REMOVE before the
-          real UI. Search this title below and submit it to trigger a win. */}
-      {state.target && (
-        <div
-          style={{
-            border: "2px dashed crimson",
-            padding: "0.5rem",
-            margin: "0.5rem 0",
-          }}
-        >
-          <strong>🐞 DEBUG — réponse :</strong>{" "}
-          {state.target.kind === "release"
-            ? `${state.target.title} — ${state.target.artist}${
-                state.target.year ? ` (${state.target.year})` : ""
-              }`
-            : state.target.name}{" "}
-          <code>[{state.target.mbid}]</code>
-          {state.target.kind === "release" &&
-            (state.target.coverArtUrl ? (
-              <div>
-                <img
-                  src={state.target.coverArtUrl}
-                  alt={`Pochette de ${state.target.title}`}
-                  width={120}
-                  height={120}
-                  style={{ marginTop: "0.5rem", objectFit: "cover" }}
-                />
-              </div>
-            ) : (
-              <p>(aucune pochette trouvée — CAA 404 + Discogs sans résultat)</p>
-            ))}
-        </div>
-      )}
-
-      {state.availableHint && (
-        <div>
-          <strong>
-            Indice :{" "}
-            {state.availableHint.kind === "blur"
-              ? "réduction du flou"
-              : `champ "${state.availableHint.field}"`}
-          </strong>{" "}
-          <button onClick={takeHint}>Prendre</button>{" "}
-          <button onClick={skipHint}>Ignorer</button>
-        </div>
-      )}
-
-      {state.status === "playing" && (
-        <>
-          <input
-            value={inputValue}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Chercher…"
-          />
-          {error && <p style={{ color: "crimson" }}>{error}</p>}
-          <ul>
-            {suggestions.map((s) => (
-              <li
-                key={s.mbid}
-                style={{ cursor: "pointer" }}
-                onClick={() => {
-                  submitGuess(s.mbid);
-                  clearSuggestions();
-                }}
-              >
-                {s.title} — {s.subtitle}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-
-      <hr />
-      {state.guesses.map((g, i) => (
-        <div key={i} style={{ marginBottom: "0.5rem" }}>
-          <strong>
-            {g.resource.kind === "release" ? g.resource.title : g.resource.name}
-          </strong>{" "}
-          {Object.entries(g.comparison).map(([field, fc]) => (
-            <span key={field} style={{ marginRight: "0.5rem" }}>
-              {field}:{(fc as { feedback: string }).feedback}
-            </span>
-          ))}
-        </div>
-      ))}
-
-      {(state.status === "won" || state.status === "lost") && (
-        <div>
-          <p>{state.status === "won" ? "Gagné !" : "Perdu"}</p>
-          {state.target && (
-            <p>
-              Réponse :{" "}
-              {state.target.kind === "release"
-                ? state.target.title
-                : state.target.name}
-            </p>
-          )}
-          {state.target?.kind === "release" && state.target.coverArtUrl && (
-            <img
-              src={state.target.coverArtUrl}
-              alt={`Pochette de ${state.target.title}`}
-              width={160}
-              height={160}
-              style={{ objectFit: "cover" }}
-            />
-          )}
-          <div>
-            <button onClick={reset}>Rejouer</button>
-          </div>
-        </div>
-      )}
+    <div className="min-h-full w-full px-2 py-3 sm:px-6 sm:py-6">
+      <main className="xp-window mx-auto flex max-w-5xl flex-col overflow-hidden font-tahoma">
+        <TitleBar />
+        <MenuBar date={date} mode={mode} isDaily={isDaily} />
+        <Toolbar
+          mode={mode}
+          difficulty={difficulty}
+          isDaily={isDaily}
+          onModeChange={setMode}
+          onDifficultyChange={setDifficulty}
+          onNewRandom={startRandom}
+          onDaily={startDaily}
+        />
+        <GameBoard
+          key={boardKey}
+          mode={mode}
+          difficulty={difficulty}
+          isDaily={isDaily}
+          date={date}
+          onNewRandom={startRandom}
+          onDaily={startDaily}
+        />
+      </main>
     </div>
   );
 }

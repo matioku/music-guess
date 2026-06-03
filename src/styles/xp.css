@@ -1,0 +1,169 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   xp.css — skeuomorphic Windows XP (Luna) + Windows Media Player 9 details.
+   Layout/spacing is handled with Tailwind; this file holds the bevels,
+   glossy gradients and LCD glow that arbitrary utilities can't express cleanly.
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* Local fonts -------------------------------------------------------------- */
+@font-face {
+  font-family: "Trebuchet MS Local";
+  src: url("/fonts/trebuchet-ms-2/trebuc.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Trebuchet MS Local";
+  src: url("/fonts/trebuchet-ms-2/Trebuchet-MS-Italic.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+/* Pixel-clone Tahoma — reserved for the LCD digital counter only. */
+@font-face {
+  font-family: "XP Tahoma Pixel";
+  src: url("/fonts/windows-xp-tahoma.otf/windows-xp-tahoma.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Luna window -------------------------------------------------------------- */
+.xp-window {
+  background: #ece9d8;
+  border: 1px solid #0831d9;
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 0 0 1px #003ce6 inset, 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+.xp-titlebar {
+  background: linear-gradient(
+    180deg,
+    #0997ff 0%,
+    #0053ee 8%,
+    #0050ee 40%,
+    #06f 88%,
+    #0344c4 100%
+  );
+  border-radius: 7px 7px 0 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+/* Decorative caption buttons (min / max / close) */
+.xp-caption-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
+  line-height: 1;
+}
+.xp-caption-btn.is-close {
+  background: linear-gradient(180deg, #e98b7e 0%, #d44a32 45%, #b22a14 100%);
+}
+.xp-caption-btn.is-plain {
+  background: linear-gradient(180deg, #5aa0ff 0%, #2f73e6 45%, #1c50c0 100%);
+}
+
+/* Raised "outset" control (toolbar buttons, menu items) -------------------- */
+.xp-button {
+  background: linear-gradient(180deg, #fdfdfd 0%, #f1efe2 45%, #e3dfc8 100%);
+  border: 1px solid #8e8b73;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px #ffffff;
+  color: #1a1a1a;
+}
+.xp-button:hover {
+  border-color: #f0a30a;
+  box-shadow: inset 0 0 0 1px #ffffff, 0 0 0 1px #ffd98a;
+}
+.xp-button:active,
+.xp-button[aria-pressed="true"],
+.xp-button.is-active {
+  background: linear-gradient(180deg, #d8e4f6 0%, #c2d4ee 100%);
+  border-color: #5a7ec0;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.25);
+}
+.xp-button:focus-visible {
+  outline: 1px dotted #1a1a1a;
+  outline-offset: -3px;
+}
+.xp-button:disabled {
+  color: #9b988a;
+  text-shadow: 1px 1px 0 #ffffff;
+  background: #ece9d8;
+  border-color: #c7c4b1;
+  cursor: not-allowed;
+}
+
+/* Sunken "inset" field (search input, list boxes) -------------------------- */
+.xp-inset {
+  background: #ffffff;
+  border: 1px solid #7f9db9;
+  box-shadow: inset 1px 1px 1px rgba(0, 0, 0, 0.18);
+}
+.xp-inset:focus-within {
+  border-color: #2f73e6;
+}
+
+/* Beveled panel (toolbar strips, status bar) ------------------------------- */
+.xp-panel {
+  background: #ece9d8;
+  border-top: 1px solid #ffffff;
+  border-bottom: 1px solid #aca899;
+}
+
+/* XP table ----------------------------------------------------------------- */
+.xp-th {
+  background: linear-gradient(180deg, #f7f6f0 0%, #e6e3d2 100%);
+  border-right: 1px solid #c7c4b1;
+  border-bottom: 1px solid #aca899;
+  color: #2a2a2a;
+}
+
+/* WMP LCD strip ------------------------------------------------------------ */
+.lcd-strip {
+  background:
+    radial-gradient(120% 140% at 50% -20%, #14324a 0%, #0a131d 55%, #06080c 100%);
+  border: 1px solid #02040a;
+  box-shadow:
+    inset 0 0 26px rgba(70, 232, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.lcd-glow {
+  color: #6df0ff;
+  text-shadow: 0 0 6px rgba(70, 232, 255, 0.55), 0 0 1px rgba(70, 232, 255, 0.9);
+}
+.lcd-screen {
+  background: #04060a;
+  border: 1px solid #0b2230;
+  box-shadow: inset 0 0 18px rgba(70, 232, 255, 0.08);
+}
+
+/* Subtle scanline texture for the LCD */
+.lcd-scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.16) 3px
+  );
+  mix-blend-mode: multiply;
+}
+
+/* Equalizer bars (loading) */
+.eq-bar {
+  width: 4px;
+  transform-origin: bottom;
+  background: linear-gradient(180deg, #6df0ff, #1e6f7e);
+  border-radius: 1px;
+}

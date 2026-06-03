@@ -19,6 +19,9 @@ function compareNumber(
   guess: number | null,
   target: number | null
 ): FieldComparison {
+  // Both unset (e.g. an artist with no career-end / "N/A") is a match — without
+  // this, the "Fin" column stayed red on a correct guess of any active artist.
+  if (guess === null && target === null) return { value: guess, feedback: "correct" };
   if (guess === null || target === null) return { value: guess, feedback: "wrong" };
   if (guess === target) return { value: guess, feedback: "correct" };
   return { value: guess, feedback: guess > target ? "lower" : "higher" };

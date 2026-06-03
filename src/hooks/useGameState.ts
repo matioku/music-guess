@@ -17,6 +17,7 @@ import { computeAvailableHint } from "../utils/hints";
 import { getDailyMbid, getRandomMbid } from "../utils/seed";
 import { getReleaseGroup, getArtist } from "../services/musicbrainz";
 import { getCoverArt } from "../services/coverArt";
+import { getArtistImage } from "../services/artistImage";
 
 // ─── Action types ─────────────────────────────────────────────────────────────
 
@@ -191,11 +192,16 @@ async function fetchResource(mbid: string, mode: ResourceMode): Promise<Resource
   return mode === "release" ? getReleaseGroup(mbid) : getArtist(mbid);
 }
 
+// Loads the target plus its artwork: album cover for releases, photo for
+// artists. Only the mystery target goes through here — guesses don't need art.
 async function fetchResourceWithCoverArt(mbid: string, mode: ResourceMode): Promise<Resource> {
   const resource = await fetchResource(mbid, mode);
-  if (resource.kind !== "release") return resource;
-  const coverArtUrl = await getCoverArt(resource.mbid, resource.title, resource.artist);
-  return { ...resource, coverArtUrl };
+  if (resource.kind === "release") {
+    const coverArtUrl = await getCoverArt(resource.mbid, resource.title, resource.artist);
+    return { ...resource, coverArtUrl };
+  }
+  const imageUrl = await getArtistImage(resource.mbid, resource.name);
+  return { ...resource, imageUrl };
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -234,21 +240,29 @@ export function useGameState(
     [mode]
   );
 
-  // Runs once on mount: restore saved game or start fresh, then fetch target
+  // Runs once on mount: restore saved game or start fresh, then fetch target.
+  // Only the daily game is persisted/resumed (key = mode+date); random sessions
+  // always start fresh and never touch that slot. The saved difficulty must
+  // also match the selected one, so switching difficulty in the toolbar starts
+  // a new game instead of snapping back to the stored one.
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
 
     let mbidToFetch = state.targetMbid;
 
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      try {
-        const saved = JSON.parse(stored) as SavedGame;
-        dispatch({ type: "LOAD_SAVED", payload: saved });
-        mbidToFetch = saved.targetMbid;
-      } catch {
-        // Corrupted entry — proceed with fresh game
+    if (isDaily) {
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        try {
+          const saved = JSON.parse(stored) as SavedGame;
+          if (saved.difficulty === difficulty) {
+            dispatch({ type: "LOAD_SAVED", payload: saved });
+            mbidToFetch = saved.targetMbid;
+          }
+        } catch {
+          // Corrupted entry — proceed with fresh game
+        }
       }
     }
 
@@ -256,9 +270,12 @@ export function useGameState(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist on every meaningful state change (skip blank state and load errors)
+  // Persist on every meaningful state change (daily game only; skip blank
+  // state and load errors). Random sessions are intentionally not saved so
+  // they never overwrite the daily slot.
   useEffect(() => {
     if (!initialized.current) return;
+    if (!isDaily) return;
     if (state.status === "playing" && state.guesses.length === 0 && state.hintsUsed === 0) return;
     if (state.targetLoadError) return;
 
@@ -274,7 +291,7 @@ export function useGameState(
       hintsUsed: state.hintsUsed,
     };
     localStorage.setItem(key, JSON.stringify(toSave));
-  }, [state, key, date]);
+  }, [state, key, date, isDaily]);
 
   const submitGuess = useCallback(
     async (mbid: string) => {
@@ -300,11 +317,13 @@ export function useGameState(
   }, [loadTarget, state.targetMbid]);
 
   // Destructive: start a brand-new game (clears guesses and saved progress).
+  // Only clears the stored slot for the daily game — a random replay must not
+  // wipe today's saved daily progress.
   const reset = useCallback(() => {
     const currentDate = today();
     const newMbid = isDaily ? getDailyMbid(currentDate, mode) : getRandomMbid(mode);
     dispatch({ type: "RESET", payload: { targetMbid: newMbid } });
-    localStorage.removeItem(buildKey(mode, currentDate));
+    if (isDaily) localStorage.removeItem(buildKey(mode, currentDate));
     loadTarget(newMbid);
   }, [mode, isDaily, loadTarget]);
 

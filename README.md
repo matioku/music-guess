@@ -1,73 +1,72 @@
-# React + TypeScript + Vite
+# MusicGuess — Un Jour, Une Ressource
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Jeu de devinettes musical à la Wordle/Heardle. Chaque jour, une **ressource
+musicale mystère** (album ou artiste) est tirée ; le joueur la devine en
+soumettant des propositions via un autocomplete. Chaque proposition déclenche
+une comparaison **champ par champ** des métadonnées (artiste, année, type,
+pays, label, genres…), avec un retour visuel coloré + texte + icône.
 
-Currently, two official plugins are available:
+L'interface reprend l'esthétique **Windows XP (Luna)** pour le chrome
+applicatif et **Windows Media Player 9** pour la zone lecteur (pochette
+floutée, titre défilant, barres d'égaliseur).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Univers & fonctionnement
 
-## React Compiler
+- **Modes de ressource** : Release (album / EP / single / compilation) et Artiste.
+- **Difficultés** : Facile (illimité), Moyen (8 essais), Difficile (6), Expert (4).
+  Les modes capés masquent ou floutent la pochette et débloquent des indices.
+- **Tirage** : *partie du jour* (seed `date + mode`, identique pour tous) ou
+  *nouvelle partie aléatoire*.
+- **Indices** : selon la difficulté, réduction progressive du flou de la
+  pochette et révélation de champs.
+- **Persistance** : la partie du jour est sauvegardée dans `localStorage` et
+  reprise au rechargement.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+La ressource cible n'apparaît jamais en clair dans le DOM avant la victoire.
 
-## Expanding the ESLint configuration
+## Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- React 19 + TypeScript strict, bundlé avec Vite
+- Tailwind CSS v3 (+ `src/styles/xp.css` pour le skeuomorphisme XP/WMP)
+- State : hooks natifs uniquement (`useReducer`, `useState`, `useEffect`)
+- Gestionnaire de paquets : **Bun**
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## APIs utilisées
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- **MusicBrainz** (`musicbrainz.org/ws/2/`) — recherche et métadonnées des
+  ressources.
+- **Cover Art Archive** — pochettes d'albums.
+- **Discogs** — images de repli (fallback) quand Cover Art Archive renvoie 404.
+  Token dans `.env.local` : `VITE_DISCOGS_TOKEN=…`.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Installation
+
+```bash
+bun install
+bun dev        # serveur de dev (HMR)
+bun build      # type-check + build de production
+bun lint       # ESLint
+bun preview    # prévisualisation du build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+> Sans Bun installé, les commandes équivalentes fonctionnent avec npm :
+> `npm install`, `npx vite`, `npx vite build`, `npx eslint .`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Structure
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+src/
+├── components/   # UI XP/WMP (TitleBar, Toolbar, LcdStrip, SearchInput,
+│                 #  GuessHistory, HintPanel, VictoryScreen, DefeatScreen…)
+├── hooks/        # useGameState, useSearch, useLocalStorage
+├── services/     # musicbrainz, coverArt, discogs
+├── utils/        # compare, hints, seed, display
+├── config/       # difficulty
+├── data/         # listes de MBIDs populaires (release / artist)
+└── types/        # types partagés
+```
+
+## Membres & rôles
+
+- Thibaud Mineau — _à compléter_
+- _à compléter_
