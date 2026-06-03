@@ -22,6 +22,8 @@ interface GameBoardProps {
   date: string;
   /** Start a fresh random round (App remounts the board). */
   onNewRandom: () => void;
+  /** Switch to (or restart) today's daily round (App remounts the board). */
+  onDaily: () => void;
 }
 
 // Owns one round of play. Remounted by App (via key) whenever the resource
@@ -33,8 +35,9 @@ export function GameBoard({
   isDaily,
   date,
   onNewRandom,
+  onDaily,
 }: GameBoardProps) {
-  const { state, submitGuess, takeHint, skipHint, reset, retryLoadTarget } =
+  const { state, submitGuess, takeHint, skipHint, retryLoadTarget } =
     useGameState(mode, difficulty, isDaily);
   const { inputValue, setInput, suggestions, isSearching, error, clearSuggestions } =
     useSearch(mode);
@@ -122,7 +125,7 @@ export function GameBoard({
           resource={state.target}
           guessCount={state.guesses.length}
           isDaily={isDaily}
-          onReplay={reset}
+          onDaily={onDaily}
           onNewRandom={onNewRandom}
         />
       )}
@@ -130,7 +133,7 @@ export function GameBoard({
         <DefeatScreen
           resource={state.target}
           isDaily={isDaily}
-          onReplay={reset}
+          onDaily={onDaily}
           onNewRandom={onNewRandom}
         />
       )}

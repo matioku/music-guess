@@ -5,14 +5,14 @@ import { ResourceCard } from "../ResourceCard/ResourceCard";
 interface DefeatScreenProps {
   resource: Resource;
   isDaily: boolean;
-  onReplay: () => void;
+  onDaily: () => void;
   onNewRandom: () => void;
 }
 
 export function DefeatScreen({
   resource,
   isDaily,
-  onReplay,
+  onDaily,
   onNewRandom,
 }: DefeatScreenProps) {
   return (
@@ -23,8 +23,8 @@ export function DefeatScreen({
       actions={
         <>
           {!isDaily && (
-            <button type="button" className="xp-button px-4 py-1.5" onClick={onReplay}>
-              Rejouer
+            <button type="button" className="xp-button px-4 py-1.5" onClick={onDaily}>
+              Partie du jour
             </button>
           )}
           <button

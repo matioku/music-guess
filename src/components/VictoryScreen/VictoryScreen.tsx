@@ -6,7 +6,7 @@ interface VictoryScreenProps {
   resource: Resource;
   guessCount: number;
   isDaily: boolean;
-  onReplay: () => void;
+  onDaily: () => void;
   onNewRandom: () => void;
 }
 
@@ -14,7 +14,7 @@ export function VictoryScreen({
   resource,
   guessCount,
   isDaily,
-  onReplay,
+  onDaily,
   onNewRandom,
 }: VictoryScreenProps) {
   return (
@@ -25,8 +25,8 @@ export function VictoryScreen({
       actions={
         <>
           {!isDaily && (
-            <button type="button" className="xp-button px-4 py-1.5" onClick={onReplay}>
-              Rejouer
+            <button type="button" className="xp-button px-4 py-1.5" onClick={onDaily}>
+              Partie du jour
             </button>
           )}
           <button

@@ -49,6 +49,7 @@ function App() {
           isDaily={isDaily}
           date={date}
           onNewRandom={startRandom}
+          onDaily={startDaily}
         />
       </main>
     </div>

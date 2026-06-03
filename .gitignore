@@ -27,3 +27,6 @@ docs/
 
 .env
 .env.local
+
+SPEC.md
+package-lock.json
