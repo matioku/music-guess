@@ -1,3 +1,39 @@
+@import "./styles/xp.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    /* XP teal desktop wallpaper feel behind the app window. */
+    background:
+      radial-gradient(140% 120% at 50% 0%, #7aa7d6 0%, #4f80b8 40%, #2f5e92 100%)
+        fixed;
+    font-family: "Tahoma", "Verdana", "Geneva", sans-serif;
+    font-size: 13px;
+    color: #1a1a1a;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Reduce motion: stop the marquee / equalizer for sensitive users. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+}

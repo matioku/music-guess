@@ -1,4 +1,3 @@
-import "./App.css";
 import { useGameState } from "./hooks/useGameState";
 import { useSearch } from "./hooks/useSearch";
 
