@@ -4,6 +4,7 @@ import { StatusBar } from "../StatusBar/StatusBar";
 import { LcdStrip } from "../LcdStrip/LcdStrip";
 import { SearchInput } from "../SearchInput/SearchInput";
 import { GuessHistory } from "../GuessHistory/GuessHistory";
+import { HintPanel } from "../HintPanel/HintPanel";
 import { MODE_LABELS } from "../../utils/display";
 import type { ResourceMode, Difficulty, Resource } from "../../types";
 
@@ -23,11 +24,8 @@ interface GameBoardProps {
 // mode, difficulty or daily/random session changes, so the hooks re-initialise
 // cleanly. Everything that depends on the mystery resource lives here.
 export function GameBoard({ mode, difficulty, isDaily, date }: GameBoardProps) {
-  const { state, submitGuess, retryLoadTarget } = useGameState(
-    mode,
-    difficulty,
-    isDaily
-  );
+  const { state, submitGuess, takeHint, skipHint, retryLoadTarget } =
+    useGameState(mode, difficulty, isDaily);
   const { inputValue, setInput, suggestions, isSearching, error, clearSuggestions } =
     useSearch(mode);
 
@@ -89,6 +87,14 @@ export function GameBoard({ mode, difficulty, isDaily, date }: GameBoardProps) {
             error={error}
             onChange={setInput}
             onSelect={handleSelect}
+          />
+        )}
+
+        {state.status === "playing" && state.availableHint && (
+          <HintPanel
+            hint={state.availableHint}
+            onTake={takeHint}
+            onSkip={skipHint}
           />
         )}
 

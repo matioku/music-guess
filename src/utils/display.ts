@@ -41,6 +41,24 @@ export function fieldsForMode(mode: ResourceMode) {
   return mode === "release" ? RELEASE_FIELDS : ARTIST_FIELDS;
 }
 
+// Labels for every field key a hint can reference (the hint schedule in
+// hints.ts uses a couple of keys, e.g. "area", that aren't dedicated columns).
+const FIELD_LABELS: Record<string, string> = {
+  artist: "Artiste",
+  year: "Année",
+  type: "Type",
+  country: "Pays",
+  area: "Pays / origine",
+  label: "Label",
+  careerStart: "Début de carrière",
+  careerEnd: "Fin de carrière",
+  tags: "Genres",
+};
+
+export function fieldLabel(key: string): string {
+  return FIELD_LABELS[key] ?? key;
+}
+
 export interface FeedbackMeta {
   /** Short symbol doubled with the colour (accessibility). */
   icon: string;
