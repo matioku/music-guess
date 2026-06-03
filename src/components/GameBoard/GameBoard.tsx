@@ -1,6 +1,9 @@
 import { useGameState } from "../../hooks/useGameState";
+import { useSearch } from "../../hooks/useSearch";
 import { StatusBar } from "../StatusBar/StatusBar";
 import { LcdStrip } from "../LcdStrip/LcdStrip";
+import { SearchInput } from "../SearchInput/SearchInput";
+import { MODE_LABELS } from "../../utils/display";
 import type { ResourceMode, Difficulty, Resource } from "../../types";
 
 function coverOf(target: Resource | null): string | null {
@@ -19,7 +22,18 @@ interface GameBoardProps {
 // mode, difficulty or daily/random session changes, so the hooks re-initialise
 // cleanly. Everything that depends on the mystery resource lives here.
 export function GameBoard({ mode, difficulty, isDaily, date }: GameBoardProps) {
-  const { state, retryLoadTarget } = useGameState(mode, difficulty, isDaily);
+  const { state, submitGuess, retryLoadTarget } = useGameState(
+    mode,
+    difficulty,
+    isDaily
+  );
+  const { inputValue, setInput, suggestions, isSearching, error, clearSuggestions } =
+    useSearch(mode);
+
+  const handleSelect = (mbid: string) => {
+    submitGuess(mbid);
+    clearSuggestions();
+  };
 
   if (state.targetLoadError) {
     return (
@@ -62,9 +76,25 @@ export function GameBoard({ mode, difficulty, isDaily, date }: GameBoardProps) {
         guessCount={state.guesses.length}
       />
 
-      {/* Game zone — search input + guess history, built in later commits. */}
-      <div className="min-h-[120px] rounded-sm border border-[#aca899] bg-white p-3 text-[12px] text-[#5a5749]">
-        Zone de jeu (à venir) — essais : {state.guesses.length}
+      {/* Game zone — search input + guess history. */}
+      <div className="rounded-sm border border-[#aca899] [border-top-color:#fff] [border-left-color:#fff] bg-xp-beige p-3">
+        {state.status === "playing" && (
+          <SearchInput
+            label={`Proposez ${mode === "release" ? "un album" : "un artiste"}`}
+            placeholder={`Rechercher ${MODE_LABELS[mode].toLowerCase()}…`}
+            value={inputValue}
+            suggestions={suggestions}
+            isSearching={isSearching}
+            error={error}
+            onChange={setInput}
+            onSelect={handleSelect}
+          />
+        )}
+
+        {/* Guess history table — built in a later commit. */}
+        <p className="mt-3 text-[12px] text-[#5a5749]">
+          Essais : {state.guesses.length}
+        </p>
       </div>
 
       <StatusBar
