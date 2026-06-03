@@ -114,6 +114,15 @@ interface MBArtistSearchResponse {
   artists: MBArtist[];
 }
 
+interface MBRelation {
+  type: string;
+  url?: { resource: string };
+}
+
+interface MBArtistRelationsResponse {
+  relations?: MBRelation[];
+}
+
 // --- Utilitaire interne ---
 
 async function mbFetch<T>(
@@ -278,4 +287,20 @@ export async function searchArtists(
 export async function getArtist(mbid: string): Promise<Artist> {
   const data = await mbFetch<MBArtist>(`artist/${mbid}`, { inc: "tags" });
   return mapArtist(data);
+}
+
+// External URL relationships of an artist (used to resolve a photo, since
+// MusicBrainz/Cover Art Archive host album art only, not artist images).
+export async function getArtistRelations(
+  mbid: string,
+  signal?: AbortSignal
+): Promise<{ type: string; resource: string }[]> {
+  const data = await mbFetch<MBArtistRelationsResponse>(
+    `artist/${mbid}`,
+    { inc: "url-rels" },
+    signal
+  );
+  return (data.relations ?? [])
+    .filter((r): r is MBRelation & { url: { resource: string } } => !!r.url?.resource)
+    .map((r) => ({ type: r.type, resource: r.url.resource }));
 }

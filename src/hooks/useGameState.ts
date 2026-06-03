@@ -17,6 +17,7 @@ import { computeAvailableHint } from "../utils/hints";
 import { getDailyMbid, getRandomMbid } from "../utils/seed";
 import { getReleaseGroup, getArtist } from "../services/musicbrainz";
 import { getCoverArt } from "../services/coverArt";
+import { getArtistImage } from "../services/artistImage";
 
 // ─── Action types ─────────────────────────────────────────────────────────────
 
@@ -191,11 +192,16 @@ async function fetchResource(mbid: string, mode: ResourceMode): Promise<Resource
   return mode === "release" ? getReleaseGroup(mbid) : getArtist(mbid);
 }
 
+// Loads the target plus its artwork: album cover for releases, photo for
+// artists. Only the mystery target goes through here — guesses don't need art.
 async function fetchResourceWithCoverArt(mbid: string, mode: ResourceMode): Promise<Resource> {
   const resource = await fetchResource(mbid, mode);
-  if (resource.kind !== "release") return resource;
-  const coverArtUrl = await getCoverArt(resource.mbid, resource.title, resource.artist);
-  return { ...resource, coverArtUrl };
+  if (resource.kind === "release") {
+    const coverArtUrl = await getCoverArt(resource.mbid, resource.title, resource.artist);
+    return { ...resource, coverArtUrl };
+  }
+  const imageUrl = await getArtistImage(resource.mbid);
+  return { ...resource, imageUrl };
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
