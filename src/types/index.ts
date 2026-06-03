@@ -1,6 +1,10 @@
 export type ResourceMode  = "release" | "artist";
-export type Difficulty    = "easy" | "hard";
+export type Difficulty    = "easy" | "medium" | "hard" | "expert";
 export type GameStatus    = "playing" | "won" | "lost";
+export type CoverMode     = "visible" | "blurred" | "hidden";
+export type HintType      =
+  | { kind: "blur" }
+  | { kind: "field"; field: string };
 export type FieldFeedback = "correct" | "wrong" | "partial" | "higher" | "lower";
 
 export interface ReleaseGroup {
@@ -74,6 +78,15 @@ export interface GameState {
   targetMbid: string;
   target: Resource | null;
   guesses: Guess[];
+  coverMode: CoverMode;
+  blurLevel: number;
+  revealedFields: string[];
+  availableHint: HintType | null;
+  hintsUsed: number;
+  isLoadingTarget: boolean;
+  // True when fetching the target failed; kept separate from `status` so a
+  // retry can restore the real game status (playing/won/lost).
+  targetLoadError: boolean;
 }
 
 export interface SavedGame {
@@ -83,6 +96,9 @@ export interface SavedGame {
   targetMbid: string;
   guesses: Guess[];
   status: GameStatus;
+  blurLevel: number;
+  revealedFields: string[];
+  hintsUsed: number;
 }
 
 export interface SearchResult {
