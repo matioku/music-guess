@@ -1,5 +1,8 @@
+import { useState } from "react";
+import { CoverZoomModal } from "../Modal/CoverZoomModal";
 import { useGameState } from "../../hooks/useGameState";
 import { useSearch } from "../../hooks/useSearch";
+import { useSettings } from "../../hooks/useSettings";
 import { StatusBar } from "../StatusBar/StatusBar";
 import { LcdStrip } from "../LcdStrip/LcdStrip";
 import { SearchInput } from "../SearchInput/SearchInput";
@@ -41,6 +44,9 @@ export function GameBoard({
     useGameState(mode, difficulty, isDaily);
   const { inputValue, setInput, suggestions, isSearching, error, clearSuggestions } =
     useSearch(mode);
+  const { settings } = useSettings();
+
+  const [zoomOpen, setZoomOpen] = useState(false);
 
   const handleSelect = (mbid: string) => {
     submitGuess(mbid);
@@ -75,6 +81,12 @@ export function GameBoard({
     ? state.target.artist
     : null;
 
+  // Blur applied to the LCD cover; once revealed it's crisp. The zoom enlarges
+  // the cover ~3× the LCD size, so the modal blur is scaled to match and never
+  // reveals more detail than the LCD while playing.
+  const coverBlurPx = revealed ? 0 : state.blurLevel * settings.blurFactor;
+  const zoomBlurPx = coverBlurPx * 3;
+
   return (
     <div className="flex flex-col gap-2 bg-xp-beige p-2">
       <LcdStrip
@@ -87,6 +99,7 @@ export function GameBoard({
         subtitle={subtitle}
         difficulty={difficulty}
         guessCount={state.guesses.length}
+        onZoom={() => setZoomOpen(true)}
       />
 
       {/* Game zone — search input + guess history. */}
@@ -138,6 +151,14 @@ export function GameBoard({
         />
       )}
 
+      {zoomOpen && coverOf(state.target) && (
+        <CoverZoomModal
+          src={coverOf(state.target)!}
+          title={revealed ? (title ?? "Pochette") : "Pochette mystère"}
+          blurPx={zoomBlurPx}
+          onClose={() => setZoomOpen(false)}
+        />
+      )}
       <StatusBar
         mode={mode}
         difficulty={difficulty}
