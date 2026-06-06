@@ -1,4 +1,6 @@
+import { useState } from "react";
 import type { Resource } from "../../types";
+import { CoverZoomModal } from "../Modal/CoverZoomModal";
 
 interface ResourceCardProps {
   resource: Resource;
@@ -30,28 +32,40 @@ function rowsFor(resource: Resource): { label: string; value: string }[] {
   ];
 }
 
-// Final reveal card: cover/photo + the full metadata of the resource.
+// Final reveal card: cover/photo + the full metadata of the resource. The
+// visual is large and clickable to open a zoomed view.
 export function ResourceCard({ resource }: ResourceCardProps) {
+  const [zoom, setZoom] = useState(false);
   const title = resource.kind === "release" ? resource.title : resource.name;
   const image = resource.kind === "release" ? resource.coverArtUrl : resource.imageUrl;
   const rows = rowsFor(resource);
 
+  const frame =
+    "lcd-screen mx-auto h-40 w-40 shrink-0 overflow-hidden rounded-sm";
+
   return (
     <div className="flex flex-col gap-3 sm:flex-row">
-      <div className="lcd-screen mx-auto h-28 w-28 shrink-0 overflow-hidden rounded-sm">
-        {image ? (
+      {image ? (
+        <button
+          type="button"
+          onClick={() => setZoom(true)}
+          aria-label={`Agrandir le visuel de ${title}`}
+          className={`${frame} cursor-zoom-in`}
+        >
           <img
             src={image}
             alt={`Visuel de ${title}`}
             className="h-full w-full object-cover"
             draggable={false}
           />
-        ) : (
+        </button>
+      ) : (
+        <div className={frame}>
           <div className="grid h-full w-full place-items-center">
-            <span className="lcd-glow font-trebuchet text-4xl font-bold">♪</span>
+            <span className="lcd-glow font-trebuchet text-5xl font-bold">♪</span>
           </div>
-        )}
-      </div>
+        </div>
+      )}
       <div className="min-w-0 flex-1">
         <h4 className="m-0 mb-1 font-trebuchet text-[15px] font-bold text-[#1a1a1a]">
           {title}
@@ -65,6 +79,9 @@ export function ResourceCard({ resource }: ResourceCardProps) {
           ))}
         </dl>
       </div>
+      {zoom && image && (
+        <CoverZoomModal src={image} title={title} onClose={() => setZoom(false)} />
+      )}
     </div>
   );
 }

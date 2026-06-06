@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { CoverZoomModal } from "../Modal/CoverZoomModal";
 import { useGameState } from "../../hooks/useGameState";
 import { useSearch } from "../../hooks/useSearch";
 import { StatusBar } from "../StatusBar/StatusBar";
@@ -41,6 +43,8 @@ export function GameBoard({
     useGameState(mode, difficulty, isDaily);
   const { inputValue, setInput, suggestions, isSearching, error, clearSuggestions } =
     useSearch(mode);
+
+  const [zoomOpen, setZoomOpen] = useState(false);
 
   const handleSelect = (mbid: string) => {
     submitGuess(mbid);
@@ -87,6 +91,7 @@ export function GameBoard({
         subtitle={subtitle}
         difficulty={difficulty}
         guessCount={state.guesses.length}
+        onZoom={() => setZoomOpen(true)}
       />
 
       {/* Game zone — search input + guess history. */}
@@ -138,6 +143,13 @@ export function GameBoard({
         />
       )}
 
+      {zoomOpen && coverOf(state.target) && (
+        <CoverZoomModal
+          src={coverOf(state.target)!}
+          title={title ?? "Pochette"}
+          onClose={() => setZoomOpen(false)}
+        />
+      )}
       <StatusBar
         mode={mode}
         difficulty={difficulty}

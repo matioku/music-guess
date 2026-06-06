@@ -1,4 +1,5 @@
 import type { CoverMode, Difficulty } from "../../types";
+import { useSettings } from "../../hooks/useSettings";
 import { DifficultyBadge } from "../DifficultyBadge/DifficultyBadge";
 import { Equalizer } from "./Equalizer";
 
@@ -14,6 +15,8 @@ interface LcdStripProps {
   subtitle: string | null;
   difficulty: Difficulty;
   guessCount: number;
+  /** Ouvre le zoom de la pochette (uniquement actif une fois révélée). */
+  onZoom?: () => void;
 }
 
 function CoverArt({
@@ -21,30 +24,53 @@ function CoverArt({
   coverMode,
   blurLevel,
   revealed,
-}: Pick<LcdStripProps, "coverUrl" | "coverMode" | "blurLevel" | "revealed">) {
+  onZoom,
+}: Pick<LcdStripProps, "coverUrl" | "coverMode" | "blurLevel" | "revealed" | "onZoom">) {
+  const { settings } = useSettings();
   const hidden = coverMode === "hidden" && !revealed;
   const showImage = coverUrl && !hidden;
-  // 0 once revealed; otherwise scaled so the heaviest level reads as a blob.
-  const blurPx = revealed ? 0 : blurLevel * 4;
+  // 0 once revealed; otherwise scaled by the user's blur factor.
+  const blurPx = revealed ? 0 : blurLevel * settings.blurFactor;
 
-  return (
-    <div className="lcd-screen relative h-[88px] w-[88px] shrink-0 overflow-hidden rounded-sm">
-      {showImage ? (
-        <img
-          src={coverUrl}
-          alt={revealed ? "Pochette de la ressource" : ""}
-          aria-hidden={!revealed}
-          className="h-full w-full object-cover transition-[filter] duration-500"
-          style={{ filter: blurPx ? `blur(${blurPx}px)` : undefined }}
-          draggable={false}
-        />
-      ) : (
+  const frame =
+    "lcd-screen relative h-[120px] w-[120px] shrink-0 overflow-hidden rounded-sm sm:h-[140px] sm:w-[140px]";
+
+  if (!showImage) {
+    return (
+      <div className={frame}>
         <div className="grid h-full w-full place-items-center">
-          <span className="lcd-glow font-trebuchet text-4xl font-bold">?</span>
+          <span className="lcd-glow font-trebuchet text-5xl font-bold">?</span>
         </div>
-      )}
-    </div>
+      </div>
+    );
+  }
+
+  const img = (
+    <img
+      src={coverUrl}
+      alt={revealed ? "Pochette de la ressource" : ""}
+      aria-hidden={!revealed}
+      className="h-full w-full object-cover transition-[filter] duration-500"
+      style={{ filter: blurPx ? `blur(${blurPx}px)` : undefined }}
+      draggable={false}
+    />
   );
+
+  // Cliquable seulement une fois révélée : en jeu, zoomer trahirait la réponse.
+  if (revealed && onZoom) {
+    return (
+      <button
+        type="button"
+        onClick={onZoom}
+        aria-label="Agrandir la pochette"
+        className={`${frame} cursor-zoom-in`}
+      >
+        {img}
+      </button>
+    );
+  }
+
+  return <div className={frame}>{img}</div>;
 }
 
 // The Windows Media Player "now playing" zone. Shows the (obscured) cover, a
@@ -61,6 +87,7 @@ export function LcdStrip({
   subtitle,
   difficulty,
   guessCount,
+  onZoom,
 }: LcdStripProps) {
   return (
     <section
@@ -69,7 +96,7 @@ export function LcdStrip({
     >
       {isLoading ? (
         <>
-          <div className="lcd-screen grid h-[88px] w-[88px] shrink-0 place-items-center rounded-sm">
+          <div className="lcd-screen grid h-[120px] w-[120px] shrink-0 place-items-center rounded-sm sm:h-[140px] sm:w-[140px]">
             <Equalizer />
           </div>
           <div className="flex flex-1 flex-col gap-2">
@@ -86,6 +113,7 @@ export function LcdStrip({
             coverMode={coverMode}
             blurLevel={blurLevel}
             revealed={revealed}
+            onZoom={onZoom}
           />
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             <h2 className="sr-only">Ressource mystère</h2>
