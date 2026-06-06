@@ -18,6 +18,7 @@ function App() {
   const [isDaily, setIsDaily] = useState(true);
   // Bumped to force a fresh GameBoard mount (new random draw / replay).
   const [sessionNonce, setSessionNonce] = useState(0);
+  const [, setActiveModal] = useState<null | "rules" | "about" | "options">(null);
 
   useEffect(() => {
     document.documentElement.classList.toggle("reduce-motion", settings.reducedMotion);
@@ -31,6 +32,7 @@ function App() {
     setIsDaily(true);
     setSessionNonce((n) => n + 1);
   };
+  const replay = () => (isDaily ? startDaily() : startRandom());
 
   const boardKey = `${mode}-${difficulty}-${isDaily ? "d" : "r"}-${sessionNonce}`;
 
@@ -38,7 +40,20 @@ function App() {
     <div className="min-h-full w-full px-2 py-3 sm:px-6 sm:py-6">
       <main className="xp-window mx-auto flex max-w-5xl flex-col overflow-hidden font-tahoma">
         <TitleBar />
-        <MenuBar date={date} mode={mode} isDaily={isDaily} />
+        <MenuBar
+          date={date}
+          mode={mode}
+          difficulty={difficulty}
+          isDaily={isDaily}
+          onModeChange={setMode}
+          onDifficultyChange={setDifficulty}
+          onDaily={startDaily}
+          onNewRandom={startRandom}
+          onReplay={replay}
+          onOpenRules={() => setActiveModal("rules")}
+          onOpenAbout={() => setActiveModal("about")}
+          onOpenOptions={() => setActiveModal("options")}
+        />
         <Toolbar
           mode={mode}
           difficulty={difficulty}
