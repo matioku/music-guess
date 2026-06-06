@@ -56,8 +56,10 @@ function CoverArt({
     />
   );
 
-  // Cliquable seulement une fois révélée : en jeu, zoomer trahirait la réponse.
-  if (revealed && onZoom) {
+  // Cliquable dès qu'une pochette est affichée (visible ou floutée). Le mode
+  // caché (?) est déjà traité par le retour anticipé plus haut, et le zoom
+  // conserve le flou — la réponse n'est donc jamais révélée en cours de partie.
+  if (onZoom) {
     return (
       <button
         type="button"
