@@ -5,6 +5,9 @@ import { TitleBar } from "./components/TitleBar/TitleBar";
 import { MenuBar } from "./components/MenuBar/MenuBar";
 import { Toolbar } from "./components/Toolbar/Toolbar";
 import { GameBoard } from "./components/GameBoard/GameBoard";
+import { OptionsModal } from "./components/Options/OptionsModal";
+import { RulesModal } from "./components/Help/RulesModal";
+import { AboutModal } from "./components/Help/AboutModal";
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -18,7 +21,7 @@ function App() {
   const [isDaily, setIsDaily] = useState(true);
   // Bumped to force a fresh GameBoard mount (new random draw / replay).
   const [sessionNonce, setSessionNonce] = useState(0);
-  const [, setActiveModal] = useState<null | "rules" | "about" | "options">(null);
+  const [activeModal, setActiveModal] = useState<null | "rules" | "about" | "options">(null);
 
   useEffect(() => {
     document.documentElement.classList.toggle("reduce-motion", settings.reducedMotion);
@@ -72,6 +75,9 @@ function App() {
           onNewRandom={startRandom}
           onDaily={startDaily}
         />
+        {activeModal === "rules" && <RulesModal onClose={() => setActiveModal(null)} />}
+        {activeModal === "about" && <AboutModal onClose={() => setActiveModal(null)} />}
+        {activeModal === "options" && <OptionsModal onClose={() => setActiveModal(null)} />}
       </main>
     </div>
   );
