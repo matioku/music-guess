@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ResourceMode, Difficulty } from "./types";
+import { useSettings } from "./hooks/useSettings";
 import { TitleBar } from "./components/TitleBar/TitleBar";
 import { MenuBar } from "./components/MenuBar/MenuBar";
 import { Toolbar } from "./components/Toolbar/Toolbar";
@@ -11,11 +12,16 @@ function today(): string {
 
 function App() {
   const date = today();
-  const [mode, setMode] = useState<ResourceMode>("release");
-  const [difficulty, setDifficulty] = useState<Difficulty>("hard");
+  const { settings } = useSettings();
+  const [mode, setMode] = useState<ResourceMode>(settings.defaultMode);
+  const [difficulty, setDifficulty] = useState<Difficulty>(settings.defaultDifficulty);
   const [isDaily, setIsDaily] = useState(true);
   // Bumped to force a fresh GameBoard mount (new random draw / replay).
   const [sessionNonce, setSessionNonce] = useState(0);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("reduce-motion", settings.reducedMotion);
+  }, [settings.reducedMotion]);
 
   const startRandom = () => {
     setIsDaily(false);
