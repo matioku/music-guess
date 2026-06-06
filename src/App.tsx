@@ -41,7 +41,7 @@ function App() {
 
   return (
     <div className="min-h-full w-full px-2 py-3 sm:px-6 sm:py-6">
-      <main className="xp-window mx-auto flex max-w-5xl flex-col overflow-hidden font-tahoma">
+      <main className="xp-window mx-auto flex max-w-5xl flex-col font-tahoma">
         <TitleBar />
         <MenuBar
           date={date}
