@@ -27,6 +27,9 @@ export function AboutModal({ onClose }: { onClose: () => void }) {
           <p className="m-0 text-[#5a5749]">
             Données : MusicBrainz · Cover Art Archive · Discogs (repli images).
           </p>
+          <p className="m-0 text-[#5a5749]">
+            Repo GitHub: <a href={'https://github.com/matioku/music-guess'} className="underline text-blue-600">https://github.com/matioku/music-guess</a>
+          </p>
         </div>
       </Dialog>
     </Modal>
