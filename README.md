@@ -10,6 +10,10 @@ L'interface reprend l'esthétique **Windows XP (Luna)** pour le chrome
 applicatif et **Windows Media Player 9** pour la zone lecteur (pochette
 floutée, titre défilant, barres d'égaliseur).
 
+## Démo jouable
+
+Jouez à MusicGuess directement dans votre navigateur ! https://musicguess.matioku.net
+
 ## Univers & fonctionnement
 
 - **Modes de ressource** : Release (album / EP / single / compilation) et Artiste.
@@ -33,11 +37,11 @@ La ressource cible n'apparaît jamais en clair dans le DOM avant la victoire.
 
 ## APIs utilisées
 
-- **MusicBrainz** (`musicbrainz.org/ws/2/`) — recherche et métadonnées des
+- [**MusicBrainz**](https://musicbrainz.org) (`musicbrainz.org/ws/2/`) — recherche et métadonnées des
   ressources.
-- **Cover Art Archive** — pochettes d'albums.
-- **Discogs** — images de repli (fallback) quand Cover Art Archive renvoie 404.
-  Token dans `.env.local` : `VITE_DISCOGS_TOKEN=…`.
+- [**Cover Art Archive**](https://coverartarchive.org/) — pochettes d'albums.
+- [**Discogs**](https://discogs.com/developers) — images de repli (fallback) quand Cover Art Archive renvoie 404.
+  Token dans `.env.local` : `VITE_DISCOGS_TOKEN=…`. (à obtenir à l'adresse https://www.discogs.com/settings/developers)
 
 ## Installation
 
@@ -68,5 +72,5 @@ src/
 
 ## Membres & rôles
 
-- Thibaud Mineau — _à compléter_
-- _à compléter_
+- Thibaud Mineau: frontend et design
+- Mathieu Chauvet: Logique et liaison des API
