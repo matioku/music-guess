@@ -2,7 +2,7 @@
 // colour/icon mapping for field feedback in one place so every component
 // renders comparisons consistently (and never relies on colour alone — RGAA).
 
-import type { ResourceMode, Difficulty, FieldFeedback } from "../types";
+import type { ResourceMode, Difficulty, FieldFeedback, Resource } from "../types";
 
 export const MODE_LABELS: Record<ResourceMode, string> = {
   release: "Release",
@@ -57,6 +57,42 @@ const FIELD_LABELS: Record<string, string> = {
 
 export function fieldLabel(key: string): string {
   return FIELD_LABELS[key] ?? key;
+}
+
+// Raw value of a target field by hint key. Mirrors the paths used in compare.ts
+// so a revealed hint shows exactly what the comparison would test against.
+function rawTargetField(
+  target: Resource,
+  key: string
+): string | number | string[] | null {
+  if (target.kind === "release") {
+    switch (key) {
+      case "artist":  return target.artist;
+      case "year":    return target.year;
+      case "type":    return target.primaryType;
+      case "country": return target.country;
+      case "label":   return target.label;
+      case "tags":    return target.tags;
+      default:        return null;
+    }
+  }
+  switch (key) {
+    case "country":
+    case "area":        return target.country ?? target.area;
+    case "type":        return target.type;
+    case "careerStart": return target.careerStart;
+    case "careerEnd":   return target.careerEnd;
+    case "tags":        return target.tags;
+    default:            return null;
+  }
+}
+
+// Display string for a hint-revealed target field ("—" when empty/unset).
+export function targetFieldValue(target: Resource, key: string): string {
+  const raw = rawTargetField(target, key);
+  if (Array.isArray(raw)) return raw.length ? raw.join(", ") : "—";
+  if (raw === null || raw === "") return "—";
+  return String(raw);
 }
 
 export interface FeedbackMeta {

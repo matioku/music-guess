@@ -8,6 +8,7 @@ import { LcdStrip } from "../LcdStrip/LcdStrip";
 import { SearchInput } from "../SearchInput/SearchInput";
 import { GuessHistory } from "../GuessHistory/GuessHistory";
 import { HintPanel } from "../HintPanel/HintPanel";
+import { RevealedHints } from "../RevealedHints/RevealedHints";
 import { VictoryScreen } from "../VictoryScreen/VictoryScreen";
 import { DefeatScreen } from "../DefeatScreen/DefeatScreen";
 import { MODE_LABELS } from "../../utils/display";
@@ -122,6 +123,13 @@ export function GameBoard({
             hint={state.availableHint}
             onTake={takeHint}
             onSkip={skipHint}
+          />
+        )}
+
+        {state.target && state.status === "playing" && (
+          <RevealedHints
+            target={state.target}
+            revealedFields={state.revealedFields}
           />
         )}
 
